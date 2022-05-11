@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.js" integrity="sha512-/xb5+PNOA079FJkngKI2jvID5lyiqdHXaUUcfmzE0X0BdpkgzIWHC59LOG90a2jDcOyRsd1luOr24UCCAG8NNw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+	<img>
+    <script>
+		const image = document.querySelector("img");
+		socket = io("http://localhost:3000");
+        document.body.addEventListener("keydown", (e) => {
+			console.log(e.key);
+            switch (e.key) {
+                case "ArrowUp":
+                    socket.emit("tp", ""); break;
+                case "ArrowDown":
+                    socket.emit("tm", ""); break;
+                case " ":
+                    socket.emit("bp", ""); break;
+                case "ArrowRight":
+                    socket.emit("sp", ""); break;
+                case "ArrowLeft":
+                    socket.emit("sm", ""); break;
+            }
+        });
+        document.body.addEventListener("keyup", async (e) => {
+            if (e.key === " ")
+                socket.emit("bm", "");
+        });
+		socket.on("image", (data) => {
+			image.src = data;
+			// const i = new Image();
+			// i.src = data;
+			// image.style.width = `${i.width}px`;
+			// image.style.height = `${i.height}px`;
+		});
+		// setInterval(() => socket.emit("image", ""), 250);
+    </script>
+</body>
+</html>
