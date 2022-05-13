@@ -4,31 +4,6 @@ const http = require("http");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
-const net = require("net");
-// const client = new net.connect({ port: 31031 }, () => {
-// 	console.log("connected to the car");
-// });
-const carserver = net.createServer()
-.listen(3001, () => {
-	console.log("car server listening")
-}).on("error", (err) =>{
-	console.error(err.message);
-}).on("connection", (socket) => {
-	console.log("car connected");
-	socket.on("connect", () => console.log("aaa"));
-	socket.on("data", (data) => {
-		if (data.toString().startsWith("GET")) {
-			console.log(data.toString());
-			socket.write("HTTP/1.1 101 Connection established\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n")
-		} else {
-			console.log(`received image: ${data.length} bytes`);
-			io.emit("image", `data:image/jpeg;base64,${encode(data.slice(6))}`);
-		}
-	});
-	socket.on("error", (err) =>{
-		console.error(err.message);
-	});
-});
 
 function encode(bitmap) {
     return Buffer.from(bitmap).toString("base64");
@@ -85,10 +60,6 @@ io.on("connection", (socket) => {
 	socket.on("connect_error", (err) => {
 		console.log(`connect_error due to ${err.message}`);
 	});
-	
-	// client.on("data", (data) => {
-	// 	io.sockets.emit("image", `data:image/jpeg;base64,${encode(data)}`)
-	// });
 }).on("error", (err) => {
     console.error(err.message);
 });
