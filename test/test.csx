@@ -2,10 +2,15 @@ using System.Net.WebSockets;
 using System.Net;
 using System.Threading;
 using System.IO;
+using System.Text.RegularExpressions;
+using System.Globalization;
+
+Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
 Func<string, byte[]> GetBytes = System.Text.Encoding.ASCII.GetBytes;
 Func<byte[], string> GetString = System.Text.Encoding.ASCII.GetString;
-Func<string, string, string> GetEvent = (eventName, data) => $"42[\"{eventName}\",\"{data}\"]";
+Func<string, string, string> Format = (eventName, data) => $"42[\"{eventName}\",\"{data}\"]";
 
 ClientWebSocket client = null;
 var uri = new Uri("ws://localhost:3000/socket.io/?EIO=4&transport=websocket");
@@ -24,7 +29,12 @@ public async Task<bool> SendConnect()
 		await client.ConnectAsync(uri, CancellationToken.None);
 		await ReadData();
 		await SendData(GetBytes("40"));
-		return (await ReadData()).StartsWith("40");
+		if ((await ReadData()).StartsWith("40"))
+		{
+			await SendData(GetBytes(Format("car", "")));
+			return (await ReadData()).StartsWith("42");
+		}
+		return false;
 	}
 	catch
 	{
@@ -79,9 +89,23 @@ public async Task Reconnect()
 	}
 }
 
+public (string, string) Parse(string input)
+{
+	if (input.StartsWith("42"))
+	{
+		var matches = Regex.Match(input, "\\[\"([\\s\\S]*)\",\"([\\s\\S]*)\"\\]").Groups;
+		var res = (matches[1].Value, matches[2].Value);
+		Console.WriteLine($"parsed: {res}");
+		return res;
+	}
+	else
+	{
+		return (null, null);
+	}
+}
+
 {
 	await Connect();
-	// await client.CloseAsync(WebSocketCloseStatus.Empty, null, CancellationToken.None);
 }
 
 var random = new Random();
@@ -89,17 +113,31 @@ var SendImage = async () =>
 {
 	if (index >= files.Length) index = 0;
 	Console.WriteLine(index);
-	await SendData(GetBytes(GetEvent("image", files[index++])));
+	await SendData(GetBytes(Format("image", files[index++])));
+};
+
+double T, B, S;
+var SendStatus = async () =>
+{
+	await SendData(GetBytes(Format("status", string.Join(",",
+		T,
+		B,
+		S,
+		195 + random.Next() % (Math.Abs(T) * 10 + Math.Abs(B) * 4 + Math.Abs(S) * 2 + 10)
+	))));
 };
 
 new Thread(async () =>
 {
+	Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+    Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 	while (true)
 	{
 		if (reconnecting) continue;
 		try
 		{
 			await SendImage();
+			await SendStatus();
 		}
 		catch
 		{
@@ -117,6 +155,16 @@ while (true)
 		string res = await ReadData();
 		if (res == "2")
 			await SendData(GetBytes("3"));
+		else
+		{
+			var (eventName, data) = Parse(res);
+			switch (eventName)
+			{
+				case "T": T = double.Parse(data); break;
+				case "B": B = double.Parse(data); break;
+				case "S": S = double.Parse(data); break;
+			}
+		}
 	}
 	catch
 	{

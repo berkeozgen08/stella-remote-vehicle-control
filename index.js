@@ -5,56 +5,76 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
-function encode(bitmap) {
-    return Buffer.from(bitmap).toString("base64");
-}
-
-let T = 0.1;
-let S = 0.0;
+let car = null;
 
 io.on("connection", (socket) => {
 	console.log(`new socket: ${socket.id}`);
+	
+	socket.on("disconnect", () => {
+		console.log(`${socket.id} disconnected`);
+		if (car?.id == socket.id) {
+			console.log("car disconnected");
+			socket.broadcast.emit("car", "disconnected");
+			car = null;
+		}
+	});
 
-	socket.on("end", () => {
-		console.log("client disconnected");
+	socket.on("car", () => {
+		console.log(`car connected`);
+		car = socket;
+		io.emit("car", "connected");
 	});
 
-	socket.on("tp", (data) => {
-		console.log("tp");
-		if (T < 0.99)
-			socket.broadcast.emit(`T,${T += 0.1}`);
+	socket.on("conn", () => {
+		socket.emit("car", car == null ? "disconnected" : "connected");
+	});
+
+	socket.on("forward", () => {
+		console.log("forward");
+		socket.broadcast.emit("T", "0.5");
+	});
+
+	socket.on("neutral", () => {
+		console.log("neutral");
+		socket.broadcast.emit("T", "0");
 	});
 	
-	socket.on("tm", (data) => {
-		console.log("tm");
-		if (T > -0.99)
-			socket.broadcast.emit(`T,${T -= 0.1}`);
+	socket.on("backward", () => {
+		console.log("backward");
+		socket.broadcast.emit("T", "-0.5");
 	});
 	
-	socket.on("bp", (data) => {
-		console.log("bp");
-		socket.broadcast.emit("B,0.5");
+	socket.on("break", () => {
+		console.log("break");
+		socket.broadcast.emit("B", "0.5");
 	});
 	
-	socket.on("bm", (data) => {
-		console.log("bm");
-		socket.broadcast.emit("B,0.0");
+	socket.on("continue", () => {
+		console.log("continue");
+		socket.broadcast.emit("B", "0");
 	});
 	
-	socket.on("sp", (data) => {
-		console.log("sp");
-		if (S < 0.99)
-			socket.broadcast.emit(`S,${S += 0.1}`);
+	socket.on("right", () => {
+		console.log("right");
+		socket.broadcast.emit("S", "0.5");
 	});
 	
-	socket.on("sm", (data) => {
-		console.log("sm");
-		if (S > -0.99)
-			socket.broadcast.emit(`S,${S -= 0.1}`);
+	socket.on("middle", () => {
+		console.log("middle");
+		socket.broadcast.emit("S", "0");
+	});
+	
+	socket.on("left", () => {
+		console.log("left");
+		socket.broadcast.emit("S", "-0.5");
 	});
 	
 	socket.on("image", (data) => {
 		socket.broadcast.emit("image", `data:image/jpeg;base64,${data}`);
+	});
+	
+	socket.on("status", (status) => {
+		socket.broadcast.emit("status", status);
 	});
 
 	socket.on("connect_error", (err) => {
