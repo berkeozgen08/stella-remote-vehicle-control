@@ -111,6 +111,7 @@ io.on("connection", (socket) => {
     console.error(err.message);
 });
 
+const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static("public"));
-server.listen(3000, () => console.log("listening"));
+server.listen(port, () => console.log("listening"));
