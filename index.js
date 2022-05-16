@@ -5,76 +5,103 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
+Array.prototype.remove = function (el) { return this.splice(this.indexOf(el), 1) };
+
 let car = null;
+const carsecret = "stellaautolab";
+const secret = "stella";
+const authenticated = [];
+authenticated.emit = function (event, data) { this.forEach(i => i.emit(event, data)); };
 
 io.on("connection", (socket) => {
 	console.log(`new socket: ${socket.id}`);
 	
 	socket.on("disconnect", () => {
 		console.log(`${socket.id} disconnected`);
-		if (car?.id == socket.id) {
+		if (car?.id === socket.id) {
 			console.log("car disconnected");
 			socket.broadcast.emit("car", "disconnected");
 			car = null;
+		} else {
+			authenticated.remove(socket);
 		}
 	});
 
-	socket.on("car", () => {
+	socket.on("car", (pw) => {
+		if (carsecret != pw) return;
 		console.log(`car connected`);
 		car = socket;
 		io.emit("car", "connected");
 	});
 
 	socket.on("conn", () => {
-		socket.emit("car", car == null ? "disconnected" : "connected");
+		socket.emit("car", car === null ? "disconnected" : "connected");
 	});
 
 	socket.on("forward", () => {
+		if (!authenticated.includes(socket)) return;
 		console.log("forward");
-		socket.broadcast.emit("T", "0.5");
+		car?.emit("T", "0.5");
 	});
 
 	socket.on("neutral", () => {
+		if (!authenticated.includes(socket)) return;
 		console.log("neutral");
-		socket.broadcast.emit("T", "0");
+		car?.emit("T", "0");
 	});
 	
 	socket.on("backward", () => {
+		if (!authenticated.includes(socket)) return;
 		console.log("backward");
-		socket.broadcast.emit("T", "-0.5");
+		car?.emit("T", "-0.5");
 	});
 	
 	socket.on("break", () => {
+		if (!authenticated.includes(socket)) return;
 		console.log("break");
-		socket.broadcast.emit("B", "0.5");
+		car?.emit("B", "0.5");
 	});
 	
 	socket.on("continue", () => {
+		if (!authenticated.includes(socket)) return;
 		console.log("continue");
-		socket.broadcast.emit("B", "0");
+		car?.emit("B", "0");
 	});
 	
 	socket.on("right", () => {
+		if (!authenticated.includes(socket)) return;
 		console.log("right");
-		socket.broadcast.emit("S", "0.5");
+		car?.emit("S", "0.5");
 	});
 	
 	socket.on("middle", () => {
+		if (!authenticated.includes(socket)) return;
 		console.log("middle");
-		socket.broadcast.emit("S", "0");
+		car?.emit("S", "0");
 	});
 	
 	socket.on("left", () => {
+		if (!authenticated.includes(socket)) return;
 		console.log("left");
-		socket.broadcast.emit("S", "-0.5");
+		car?.emit("S", "-0.5");
 	});
 	
 	socket.on("image", (data) => {
-		socket.broadcast.emit("image", `data:image/jpeg;base64,${data}`);
+		authenticated.emit("image", `data:image/jpeg;base64,${data}`);
 	});
 	
 	socket.on("status", (status) => {
-		socket.broadcast.emit("status", status);
+		authenticated.emit("status", status);
+	});
+
+	socket.on("authenticate", (pw) => {
+		if (pw === secret) {
+			console.log("authenticated");
+			socket.emit("authenticated", true);
+			authenticated.push(socket);
+		} else {
+			socket.emit("authenticated", false);
+		}
 	});
 
 	socket.on("connect_error", (err) => {

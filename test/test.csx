@@ -31,7 +31,7 @@ public async Task<bool> SendConnect()
 		await SendData(GetBytes("40"));
 		if ((await ReadData()).StartsWith("40"))
 		{
-			await SendData(GetBytes(Format("car", "")));
+			await SendData(GetBytes(Format("car", "stellaautolab")));
 			return (await ReadData()).StartsWith("42");
 		}
 		return false;

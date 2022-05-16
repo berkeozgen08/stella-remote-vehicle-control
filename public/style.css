@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap');
+
+* {
+	box-sizing: border-box;
+	font-family: Poppins;
+	color: #d1daeb;
+}
+
+body {
+	width: 100vw;
+	height: 100vh;
+	margin: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: #282c34;
+}
+
+.authenticate-form {
+	display: flex;
+	flex-direction: column;
+	text-align: center;
+}
+
+.authenticate-form > * {
+	margin: 8px;
+	position: relative;
+}
+
+.form-heading {
+	font-size: xx-large;
+}
+
+input {
+	background-color: #586173;
+	color: #d1daeb;
+	font-size: 1rem;
+	box-shadow: 1px 1px 3px #000000;
+	border: none;
+	outline: none;
+	user-select: none;
+	padding: 4px;
+	margin: 4px;
+}
+
+input:disabled {
+	opacity: 0.5;
+	cursor: unset;
+}
+
+input::placeholder {
+	color: #d1daeb8e;
+}
+
+input[type=submit]:not([disabled]) {
+	cursor: pointer;
+}
+
+input:hover:not([disabled]) {
+	background-color: #4b5261;
+}
+
+.signup-form {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+}
+
+.notf-container {
+	padding: 8px;
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	width: 25vw;
+	display: flex;
+	flex-direction: column;
+}
+
+.notf {
+	padding: 8px;
+	margin: 4px;
+	position: relative;
+	background-color: #586173;
+	box-shadow: 1px 1px 3px #000000;
+	text-align: center;
+	flex-direction: column;
+	word-wrap: break-word;
+}
+
+.notf.slideIn {
+	animation: slide 0.5s;
+}
+
+.notf.slideOut {
+	animation: slide 0.5s reverse;
+}
+
+@keyframes slide {
+	from {
+		left: 100%;
+	}
+	to {
+		left: 0;
+	}
+}
+
+@media (max-width: 768px) {
+	.notf-container {
+		width: 100vw;
+	}
+}
+
+#controls:not([hidden]) {
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#image {
+	height: 678px;
+	width: auto;
+	padding: 16px;
+}
