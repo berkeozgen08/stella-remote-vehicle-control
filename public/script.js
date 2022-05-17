@@ -1,4 +1,4 @@
-let socket = io("http://localhost:3000");
+let socket = io();
 
 const notfContainer = document.querySelector(".notf-container");
 const submit = document.getElementById("authenticate");
@@ -8,10 +8,8 @@ const controls = document.getElementById("controls");
 
 const image = document.getElementById("image");
 const conn = document.getElementById("conn");
-const Tel = document.getElementById("T");
-const Bel = document.getElementById("B");
-const Sel = document.getElementById("S");
-const Cel = document.getElementById("C");
+const speed = document.getElementById("speed");
+const rotation = document.getElementById("rotation");
 
 const down = {
 	"ArrowUp": false,
@@ -121,11 +119,9 @@ socket.on("car", (connection) => {
 });
 
 socket.on("status", (status) => {
-	const [T, B, S, C] = status.split(",");
-	Tel.innerText = T;
-	Bel.innerText = B;
-	Sel.innerText = S;
-	Cel.innerText = C;
+	const [s, r] = status.split(",");
+	speed.innerText = s;
+	rotation.innerText = r;
 });
 
 socket.on("disconnect", async () => {

@@ -13,7 +13,7 @@ Func<byte[], string> GetString = System.Text.Encoding.ASCII.GetString;
 Func<string, string, string> Format = (eventName, data) => $"42[\"{eventName}\",\"{data}\"]";
 
 ClientWebSocket client = null;
-var uri = new Uri("ws://localhost:3000/socket.io/?EIO=4&transport=websocket");
+var uri = new Uri("ws://stella-rvc.azurewebsites.net/socket.io/?EIO=4&transport=websocket");
 var reconnecting = false;
 
 var files = Directory.GetFiles(@"..\vid").Select(i => System.Convert.ToBase64String(File.ReadAllBytes(i))).ToArray();
