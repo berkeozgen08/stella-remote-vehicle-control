@@ -1,23 +1,29 @@
+#! "netcoreapp6"
+#r "nuget: System.Drawing.Common, 5.0.0"
+
 using System.Net.WebSockets;
 using System.Net;
 using System.Threading;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
 Func<string, byte[]> GetBytes = System.Text.Encoding.ASCII.GetBytes;
 Func<byte[], string> GetString = System.Text.Encoding.ASCII.GetString;
+Func<byte[], string> Base64 = System.Convert.ToBase64String;
 Func<string, string, string> Format = (eventName, data) => $"42[\"{eventName}\",\"{data}\"]";
 
 ClientWebSocket client = null;
 var uri = new Uri("ws://stella-rvc.azurewebsites.net/socket.io/?EIO=4&transport=websocket");
 var reconnecting = false;
 
-var files = Directory.GetFiles(@"..\vid").Select(i => System.Convert.ToBase64String(File.ReadAllBytes(i))).ToArray();
-int index = 0;
+// var files = Directory.GetFiles(@"..\vid").Select(i => System.Convert.ToBase64String(File.ReadAllBytes(i))).ToArray();
+// int index = 0;
 
 public async Task<bool> SendConnect()
 {
@@ -111,9 +117,22 @@ public (string, string) Parse(string input)
 var random = new Random();
 var SendImage = async () =>
 {
-	if (index >= files.Length) index = 0;
-	Console.WriteLine(index);
-	await SendData(GetBytes(Format("image", files[index++])));
+	// if (index >= files.Length) index = 0;
+	// Console.WriteLine(index);
+	Rectangle bounds = new Rectangle(0, 0, 1920, 1080);
+	using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))
+	{
+		using (Graphics g = Graphics.FromImage(bitmap))
+		{
+			g.CopyFromScreen(new Point(bounds.Left,bounds.Top), Point.Empty, bounds.Size);
+		}
+		using (var stream = new MemoryStream())
+		{
+			bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Jpeg);
+			await SendData(GetBytes(Format("image", Base64(stream.ToArray()))));
+		}
+	}
+	// await SendData(GetBytes(Format("image", files[index++])));
 };
 
 double T, B, S;
@@ -121,9 +140,7 @@ var SendStatus = async () =>
 {
 	await SendData(GetBytes(Format("status", string.Join(",",
 		T,
-		B,
-		S,
-		195 + random.Next() % (Math.Abs(T) * 10 + Math.Abs(B) * 4 + Math.Abs(S) * 2 + 10)
+		S
 	))));
 };
 
